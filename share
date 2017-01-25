@@ -12,8 +12,8 @@ end
 class SendFile < Thor
     
     desc "installs this program", "create an alias to this program to the Directory you chose"
-    def install file
-        
+    def install
+        system "ln -s $PWD/share ~/bin/"
     end
     
     desc "add_contact [NAME] [VALUE]", "adds the contact NAME, to corespond with the [VALUE] addres in your book"
@@ -35,20 +35,15 @@ class SendFile < Thor
             subject  'File Share'
             body     "#{ENV['USER']} Wants you to have this."
             add_file file
-        end
-        
+        end        
         say "Mail Sent Succesfully!", "\e[32m"
     end	
     
     desc "send [FILE] [ADDRESS]", "Emails the FILE, to the ADDRESS. If address has a entry in contacts it is changed to that."
-    long_desc <<-LONGDESC
-    Sends a email to the ADDRESS that is supplied, this email has the FILE attached to it.
-    LONGDESC
     option :message
     option :subject, :default => "Auto email with atachment"
     option :yell => :boolean, :default => false
     def send(file, address)
-        
         recipiant = lookup address
         
         bodyMessage = "#{ENV['USER']} Wants you to have this."
@@ -71,7 +66,6 @@ class SendFile < Thor
             body     bodyMessage
             add_file file
         end
-        
         say "Mail Sent Succesfully!", "\e[32m"
     end
 end
