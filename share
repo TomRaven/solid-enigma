@@ -2,26 +2,44 @@
 require 'thor'
 require 'mail'
 require 'json'
+require_relative 'contact.rb'
 
-def lookup id
-    file = File.read('contacts.json')
-    contacts = JSON.parse(file)
-    contacts.key?(id) ? contacts[id] : id
-end
-
+# Main CLI for this entire project
 class Share < Thor
     
-    desc "install", "create an alias to this program to the Directory you chose"
-    def install
-        system "ln -s $PWD/share ~/bin/"
+    desc "test", "this command is only used for debugging plaese ignore"
+    def test
+       say fish 
     end
     
+    desc "logon", "This command is automatically called when you login"
+    def logon
+    end
+        
+       
+    desc "install", "create an alias to this program to the Directory you chose"
+    option :hard, :type => :boolean, :default => false     
+    def install
+        
+        if options[:hard]
+                system "rm ~/bin/share"
+                system "rm -rf ~/Inbox/"
+        end
+
+        system "ln -s $PWD/share ~/bin/"
+        system "mkdir ~/Inbox/"
+        system "mkdir ~/Inbox/.friends"
+        system "mkdir ~/Inbox/.config"
+        system "touch ~/Inbox/.config/contacts.json"
+        system "echo \"{}\" > ~/Inbox/.config/contacts.json"
+    end
+
     desc "add_contact [NAME] [VALUE]", "adds the contact NAME, to corespond with the [VALUE] addres in your book"
     def add_contact name, value
-        file = File.read('contacts.json')
+        file = File.read(getContactBook)
         contacts = JSON.parse(file)
         contacts[name] = value
-        File.write('contacts.json', contacts.to_json)
+        File.write(getContactBook, contacts.to_json)
     end
     
     desc "i_email", "Interactive chose a file and email it to a user or users of your choice"
@@ -40,9 +58,10 @@ class Share < Thor
     end	
     
     desc "email [FILE] [ADDRESS]", "Emails the FILE, to the ADDRESS. If address has a entry in contacts it is changed to that."
-    option :message
-    option :subject, :default => "Auto email with atachment"
-    option :yell => :boolean, :default => false
+    option :message, :aliases => "-m"
+    option :test, :type => :boolean, :aliases => "-t", :default => false
+    option :subject, :default => "Auto email with atachment", :aliases => "-s"
+    option :yell, :type => :boolean, :default => false, :aliases => "-y"
     def email(file, address)
         recipiant = address.split(',').map {|i| lookup i}
         
@@ -59,17 +78,21 @@ class Share < Thor
         output = output.join("\n")
         puts options[:yell] ? output.upcase : output
         
-        begin
-            Mail.deliver do
-                from     'system.lab@marquette.edu'
-                to       recipiant
-                subject  newSubject
-                body     bodyMessage
-                add_file file
+        if !options[:test]
+            begin
+                Mail.deliver do
+                    from     'system.lab@marquette.edu'
+                    to       recipiant
+                    subject  newSubject
+                    body     bodyMessage
+                    add_file file
+                end
+                say "Mail Sent Succesfully!", "\e[32m"
+            rescue
+                say "Message Failed to send try agin", :red
             end
-            say "Mail Sent Succesfully!", "\e[32m"
-        rescue
-            say "Message Failed to send try agin", :red
+        else
+           say "Message Not Sent, Program was run in test mode. remove -t flag", :red
         end
     end
 end
