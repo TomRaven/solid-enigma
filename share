@@ -9,9 +9,9 @@ def lookup id
     contacts.key?(id) ? contacts[id] : id
 end
 
-class SendFile < Thor
+class Share < Thor
     
-    desc "installs this program", "create an alias to this program to the Directory you chose"
+    desc "install", "create an alias to this program to the Directory you chose"
     def install
         system "ln -s $PWD/share ~/bin/"
     end
@@ -23,8 +23,8 @@ class SendFile < Thor
         contacts[name] = value
         File.write('contacts.json', contacts.to_json)
     end
-        
-    desc "i", "Interactive chose a file and send it to a user or users of your choice"
+    
+    desc "i_email", "Interactive chose a file and email it to a user or users of your choice"
     def i
         target = lookup ask "Who would you like to send this to: "
         file   = ask "What file would you like to include"
@@ -39,17 +39,17 @@ class SendFile < Thor
         say "Mail Sent Succesfully!", "\e[32m"
     end	
     
-    desc "send [FILE] [ADDRESS]", "Emails the FILE, to the ADDRESS. If address has a entry in contacts it is changed to that."
+    desc "email [FILE] [ADDRESS]", "Emails the FILE, to the ADDRESS. If address has a entry in contacts it is changed to that."
     option :message
     option :subject, :default => "Auto email with atachment"
     option :yell => :boolean, :default => false
-    def send(file, address)
-        recipiant = lookup address
+    def email(file, address)
+        recipiant = address.split(',').map {|i| lookup i}
         
         bodyMessage = "#{ENV['USER']} Wants you to have this."
-        bodyMessage += options[:message] if options[:message]
+        bodyMessage += "\n\n" + options[:message] if options[:message]
         
-        newSubject = options[:subject] ? options[:subject] : "Have this file"
+        newSubject = options[:subject]
         
         output =  []
         output << "to:      #{recipiant}" 
@@ -58,16 +58,21 @@ class SendFile < Thor
         output << "subject: #{options[:subject]}" if options[:subject]
         output = output.join("\n")
         puts options[:yell] ? output.upcase : output
-
-        Mail.deliver do
-            from     'system.lab@marquette.edu'
-            to       recipiant
-            subject  newSubject
-            body     bodyMessage
-            add_file file
+        
+        begin
+            Mail.deliver do
+                from     'system.lab@marquette.edu'
+                to       recipiant
+                subject  newSubject
+                body     bodyMessage
+                add_file file
+            end
+            say "Mail Sent Succesfully!", "\e[32m"
+        rescue
+            say "Message Failed to send try agin", :red
         end
-        say "Mail Sent Succesfully!", "\e[32m"
     end
 end
 
-SendFile.start(ARGV)
+Share.start(ARGV)
+
