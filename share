@@ -16,6 +16,14 @@ class SendFile < Thor
         
     end
     
+    desc "add_contact [NAME] [VALUE]", "adds the contact NAME, to corespond with the [VALUE] addres in your book"
+    def add_contact name, value
+        file = File.read('contacts.json')
+        contacts = JSON.parse(file)
+        contacts[name] = value
+        File.write('contacts.json', contacts.to_json)
+    end
+        
     desc "i", "Interactive chose a file and send it to a user or users of your choice"
     def i
         target = lookup ask "Who would you like to send this to: "
