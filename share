@@ -1,8 +1,8 @@
 #!/usr/bin/ruby
 require 'thor'
-require 'mail'
 require 'json'
 require_relative 'contact.rb'
+require_relative 'shareMail.rb'
 
 # Main CLI for this entire project
 class Share < Thor
@@ -15,17 +15,19 @@ class Share < Thor
     desc "logon", "This command is automatically called when you login"
     def logon
     end
-        
+       
+    desc "list", "shows all contacts in your contact book."
+    def list
+        Contact.list
+    end
        
     desc "install", "create an alias to this program to the Directory you chose"
     option :hard, :type => :boolean, :default => false     
-    def install
-        
+    def install        
         if options[:hard]
                 system "rm ~/bin/share"
                 system "rm -rf ~/Inbox/"
         end
-
         system "ln -s $PWD/share ~/bin/"
         system "mkdir ~/Inbox/"
         system "mkdir ~/Inbox/.friends"
@@ -34,12 +36,10 @@ class Share < Thor
         system "echo \"{}\" > ~/Inbox/.config/contacts.json"
     end
 
-    desc "add_contact [NAME] [VALUE]", "adds the contact NAME, to corespond with the [VALUE] addres in your book"
-    def add_contact name, value
-        file = File.read(getContactBook)
-        contacts = JSON.parse(file)
-        contacts[name] = value
-        File.write(getContactBook, contacts.to_json)
+    desc "add_contact [NAME] [EMAIL ADDRESS] [INBOX PATH]", "adds the contact NAME, to corespond with the [VALUE] addres in your book"
+    def add_contact name, email, path
+        args = {:email => email, :path => File.expand_path(path) }
+        Contact.add_contact name, args, true
     end
     
     desc "i_email", "Interactive chose a file and email it to a user or users of your choice"
@@ -57,43 +57,34 @@ class Share < Thor
         say "Mail Sent Succesfully!", "\e[32m"
     end	
     
-    desc "email [FILE] [ADDRESS]", "Emails the FILE, to the ADDRESS. If address has a entry in contacts it is changed to that."
-    option :message, :aliases => "-m"
-    option :test, :type => :boolean, :aliases => "-t", :default => false
-    option :subject, :default => "Auto email with atachment", :aliases => "-s"
-    option :yell, :type => :boolean, :default => false, :aliases => "-y"
-    def email(file, address)
-        recipiant = address.split(',').map {|i| lookup i}
+    desc "email [ADDRESS]", "Emails the FILE, to the ADDRESS. If address has a entry in contacts it is changed to that."
+    option :message, :type => :string, :aliases => "-m"
+    option :subject, :type => :string, :default => "Auto email with atachment", :aliases => "-s"
+    option :file,    :aliases => '-f'
+    option :test,    :type => :boolean, :default => false, :banner=>'To Test or Not to Test'
+		option :verbose, :type => :boolean, :default => true
+    def email address
+     
+        body = "AUTOMATED Email from #{ENV['USER']}." 
+        body += options[:message] if options[:message]    
         
-        bodyMessage = "#{ENV['USER']} Wants you to have this."
-        bodyMessage += "\n\n" + options[:message] if options[:message]
-        
-        newSubject = options[:subject]
-        
-        output =  []
-        output << "to:      #{recipiant}" 
-        output << "file:    #{file}"
-        output << "message: #{options[:message]}" if options[:message]
-        output << "subject: #{options[:subject]}" if options[:subject]
-        output = output.join("\n")
-        puts options[:yell] ? output.upcase : output
-        
-        if !options[:test]
-            begin
-                Mail.deliver do
-                    from     'system.lab@marquette.edu'
-                    to       recipiant
-                    subject  newSubject
-                    body     bodyMessage
-                    add_file file
-                end
-                say "Mail Sent Succesfully!", "\e[32m"
-            rescue
-                say "Message Failed to send try agin", :red
-            end
-        else
-           say "Message Not Sent, Program was run in test mode. remove -t flag", :red
+        # new_subject  = args[:subject] ? args[:subject] : "Auto Email from #{ENV['USER']}"
+                
+        args = { :recipiant => address.split(',').map {|i| Contact.lookup_contact(i)["email"]},
+                 :subject   => options[:subject],
+                 :message   => body,
+                 :file      => options[:file] }
+       
+        if options[:verbose]
+          output = []
+          output << "Recipaint: #{args[:recipiant]}"
+          output << "Subject:   #{args[:subject]}"
+          output << "Message:   #{body}"
+          output << "File:      #{args[:file]}" if args[:file]
+          say output.join "\n"
         end
+ 
+        ShareMail.send args unless options[:test]
     end
 end
 

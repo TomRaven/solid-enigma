@@ -1,30 +1,31 @@
 require 'json'
 
-def add id, args, update
-    contacts = JSON.parse(File.read(getContactBook))    
-    raise 'Contact Already Exists' if !update && !contacts[id].nil?    
-    contacts[id] = args
+module Contact
+    def Contact.add_contact id, args, update
+        contacts = JSON.parse(File.read(getContactBook))    
+        raise 'Contact Already Exists' if !update && !contacts[id].nil?    
+        contacts[id] = args    
+        File.write getContactBook, contacts.to_json
+    end
     
-    File.write getContactBook, contacts.to_json
-end
-
-def lookup id
-    begin
-        file = File.read(getContactBook)
-        contacts = JSON.parse(file)
-        contacts.key?(id) ? contacts[id] : id
-    rescue
-        id
+    def Contact.lookup_contact id
+        begin
+            file = File.read(getContactBook)
+            contacts = JSON.parse(file)
+            contacts.key?(id) ? contacts[id] : id
+        rescue
+            id
+        end
     end
-end
-
-def list
-    contact = JSON.parse(File.read(getContactBook))
-    contact.map do |k,v|
+    
+    def Contact.list
+        contacts = JSON.parse(File.read(Contact.getContactBook))
+        puts contacts
+        contacts.each {|k,v| puts   "Name - #{k}:\n\t - Email: #{v['email']}\n\t - Inbox: #{v['path']}\n"}
     end
-end
-
-
-def getContactBook
-    ENV['HOME'] + '/Inbox/.config/contacts.json' 
+    
+    
+    def Contact.getContactBook
+        ENV['HOME'] + '/Inbox/.config/contacts.json' 
+    end
 end
