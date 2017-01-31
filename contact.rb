@@ -20,10 +20,12 @@ module Contact
     
     def Contact.list
         contacts = JSON.parse(File.read(Contact.getContactBook))
-        puts contacts
         contacts.each {|k,v| puts   "Name - #{k}:\n\t - Email: #{v['email']}\n\t - Inbox: #{v['path']}\n"}
     end
     
+    def Contact.load
+        JSON.parse(File.read(Contact.getContactBook))
+    end
     
     def Contact.getContactBook
         ENV['HOME'] + '/Inbox/.config/contacts.json' 
