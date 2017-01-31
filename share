@@ -3,6 +3,7 @@ require 'thor'
 require 'json'
 require_relative 'contact.rb'
 require_relative 'shareMail.rb'
+require_relative 'config.rb'
 
 # Main CLI for this entire project
 class Share < Thor
@@ -14,6 +15,8 @@ class Share < Thor
     
     desc "logon", "This command is automatically called when you login"
     def logon
+        s
+        
     end
        
     desc "list", "shows all contacts in your contact book."
@@ -33,7 +36,7 @@ class Share < Thor
         system "mkdir ~/Inbox/.friends"
         system "mkdir ~/Inbox/.config"
         system "touch ~/Inbox/.config/contacts.json"
-        system "echo \"{}\" > ~/Inbox/.config/contacts.json"
+        createConfig  { :default => true }, {} 
     end
 
     desc "add_contact [NAME] [EMAIL ADDRESS] [INBOX PATH]", "adds the contact NAME, to corespond with the [VALUE] addres in your book"
@@ -52,7 +55,7 @@ class Share < Thor
             to       target
             subject  'File Share'
             body     "#{ENV['USER']} Wants you to have this."
-            add_file file
+            add_file fileargs
         end        
         say "Mail Sent Succesfully!", "\e[32m"
     end	
