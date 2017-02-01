@@ -62,21 +62,6 @@ class Share < Thor
         Contact.add_contact name, args, true
     end
     
-    desc "i_email", "Interactive chose a file and email it to a user or users of your choice"
-    def i
-        target = lookup ask "Who would you like to send this to: "
-        file   = ask "What file would you like to include"
-        
-        Mail.deliver do 
-            from     'system.lab@marquette.edu'
-            to       target
-            subject  'File Share'
-            body     "#{ENV['USER']} Wants you to have this."
-            add_file fileargs
-        end        
-        say "Mail Sent Succesfully!", "\e[32m"
-    end	
-    
     desc "email [ADDRESS]", "Emails the FILE, to the ADDRESS. If address has a entry in contacts it is changed to that."
     option :message, :type => :string, :aliases => "-m"
     option :subject, :type => :string, :default => "Auto email with atachment", :aliases => "-s"
@@ -90,7 +75,7 @@ class Share < Thor
         
         # new_subject  = args[:subject] ? args[:subject] : "Auto Email from #{ENV['USER']}"
         
-        args = { :recipiant => address.split(',').map {|i| Contact.lookup_contact(i)["email"]},
+        args = { :recipiant => address.split(',').map {|i| Contact.lookup_email i},
                  :subject   => options[:subject],
                  :message   => body,
                  :file      => options[:file] }

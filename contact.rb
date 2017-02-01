@@ -8,11 +8,11 @@ module Contact
         File.write getContactBook, contacts.to_json
     end
     
-    def Contact.lookup_contact id
+    def Contact.lookup_email id
         begin
             file = File.read(getContactBook)
             contacts = JSON.parse(file)
-            contacts.key?(id) ? contacts[id] : id
+            contacts.key?(id) ? contacts[id]['email'] : id
         rescue
             id
         end

@@ -9,7 +9,7 @@ module ShareMail
             subject args[:subject]
         end
         
-        mail.add_file = args[:file] if args[:file]
+        mail.add_file args[:file] if args[:file]
         
         begin 
             mail.deliver!
