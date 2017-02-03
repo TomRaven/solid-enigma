@@ -7,22 +7,6 @@ require_relative 'config.rb'
 
 # Main CLI for this entire project
 class Share < Thor
-    
-    desc "test", "this command is only used for debugging plaese ignore"
-    def test
-        say fish 
-    end
-    
-    desc "logon", "This command is automatically called when you login"
-    def logon
-        Config.set_online
-    end
-    
-    desc "logoff", "This command is automatically called when you logoff"
-    def logoff
-        Config.set_offline
-    end
-    
     desc "list_contacts", "shows all contacts in your contact book."
     def list_contacts
         Contact.list
@@ -60,6 +44,18 @@ class Share < Thor
     def add_contact name, email, path
         args = {:email => email, :path => File.expand_path(path) }
         Contact.add_contact name, args, true
+    end
+    
+    desc "send [CONTACT] [FILE]", "Sends the FILE to the inbox of the CONTACT entered"
+    def send contact, file
+    end
+    
+    desc "recieve [FILE]", "Moves the FILE from your inbox to the local folder you are in"
+    def recieve file
+    end
+    
+    desc "list_files", "Lists all files in your inbox"
+    def list_files
     end
     
     desc "email [ADDRESS]", "Emails the FILE, to the ADDRESS. If address has a entry in contacts it is changed to that."
