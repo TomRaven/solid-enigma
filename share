@@ -1,4 +1,7 @@
 #!/usr/bin/ruby
+# share
+# Tom Lazar & Charlie Morley
+
 require 'thor'
 require 'json'
 require_relative 'contact.rb'
